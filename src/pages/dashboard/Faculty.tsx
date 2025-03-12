@@ -1,9 +1,8 @@
-
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, Calendar, MessageSquare, Bell, Users, FileUp } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Link } from 'react-router-dom';
 
 const FacultyDashboard = () => {
