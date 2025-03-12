@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'glass' | 'outline';
+  variant?: 'default' | 'glass' | 'outline' | 'primary' | 'secondary' | 'destructive';
   hoverable?: boolean;
   children: React.ReactNode;
 }
@@ -23,6 +23,9 @@ const Card = ({
           'bg-card text-card-foreground shadow-sm': variant === 'default',
           'glass': variant === 'glass',
           'border border-border bg-background': variant === 'outline',
+          'bg-primary text-primary-foreground': variant === 'primary',
+          'bg-secondary text-secondary-foreground': variant === 'secondary',
+          'bg-destructive text-destructive-foreground': variant === 'destructive',
           'transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]': hoverable,
         },
         className
