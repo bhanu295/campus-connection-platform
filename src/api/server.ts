@@ -49,7 +49,8 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res.status(400).json({ message: 'User with this email already exists' });
+      res.status(400).json({ message: 'User with this email already exists' });
+      return;
     }
 
     // Hash the password
@@ -88,18 +89,21 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     // Find the user
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
     }
 
     // Check if the role matches
     if (role.toUpperCase() !== user.role) {
-      return res.status(400).json({ message: 'Invalid role for this user' });
+      res.status(400).json({ message: 'Invalid role for this user' });
+      return;
     }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
     }
 
     // Generate JWT token
@@ -227,7 +231,8 @@ app.get('/api/events/:id', async (req: Request, res: Response) => {
     });
     
     if (!event) {
-      return res.status(404).json({ message: 'Event not found' });
+      res.status(404).json({ message: 'Event not found' });
+      return;
     }
     
     res.json(event);
@@ -365,7 +370,8 @@ app.get('/api/forum/:id', async (req: Request, res: Response) => {
     });
     
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      res.status(404).json({ message: 'Post not found' });
+      return;
     }
     
     res.json(post);
