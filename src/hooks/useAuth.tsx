@@ -4,10 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 
+// Set API base URL based on environment
+// In development, this points to the separate backend server
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:5000/api' 
+  : '/api'; // In production, adjust this to your backend URL
+
 // Configure axios
-axios.defaults.baseURL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:5000' 
-  : '';
+axios.defaults.baseURL = API_BASE_URL;
 
 interface User {
   id: string;
@@ -56,8 +60,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string, role: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post('/api/auth/login', { email, password, role });
+      console.log('Logging in with:', { email, password, role });
+      console.log('API URL:', API_BASE_URL);
+      
+      const response = await axios.post('/auth/login', { email, password, role });
       const { user, token } = response.data;
+      
+      console.log('Login response:', response.data);
       
       setUser(user);
       localStorage.setItem('user', JSON.stringify(user));
@@ -88,8 +97,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const register = async (name: string, email: string, password: string, role: string) => {
     try {
       setIsLoading(true);
-      const response = await axios.post('/api/auth/register', { name, email, password, role });
+      console.log('Registering with:', { name, email, password, role });
+      console.log('API URL:', API_BASE_URL);
+      
+      const response = await axios.post('/auth/register', { name, email, password, role });
       const { user, token } = response.data;
+      
+      console.log('Registration response:', response.data);
       
       setUser(user);
       localStorage.setItem('user', JSON.stringify(user));

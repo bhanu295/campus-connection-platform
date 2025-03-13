@@ -2,7 +2,15 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from './prisma';
-import type { User } from '@prisma/client';
+
+// Define User type instead of importing from @prisma/client
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
 
 // JWT Secret key - in production this should be stored in environment variables
 const JWT_SECRET = 'your-secret-key-change-in-production';

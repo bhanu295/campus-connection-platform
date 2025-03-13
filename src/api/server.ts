@@ -1,3 +1,4 @@
+
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { prisma } from '../lib/prisma';
@@ -7,7 +8,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.com'] // Replace with your actual frontend domain in production
+    : ['http://localhost:8080'] // Frontend dev server port
+}));
 app.use(express.json());
 
 // Authentication middleware
@@ -83,10 +88,10 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     // Generate JWT token
     const token = generateToken(user);
 
-    return res.status(201).json({ user, token });
+    res.status(201).json({ user, token });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -118,7 +123,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       role: user.role,
     });
 
-    return res.json({
+    res.json({
       user: {
         id: user.id,
         name: user.name,
@@ -129,7 +134,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -146,10 +151,10 @@ app.get('/api/materials', async (req: Request, res: Response) => {
         },
       },
     });
-    return res.json(materials);
+    res.json(materials);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -173,10 +178,10 @@ app.post('/api/materials', authenticate, async (req: Request, res: Response) => 
       },
     });
 
-    return res.status(201).json(material);
+    res.status(201).json(material);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -193,10 +198,10 @@ app.put('/api/materials/:id/download', async (req: Request, res: Response) => {
       },
     });
     
-    return res.json(material);
+    res.json(material);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -452,8 +457,16 @@ app.get('/api/admin/users', authenticate, authorize(['ADMIN']), async (req: Requ
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Add a health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
+
+// Start the server
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`);
+  });
+}
 
 export default app;

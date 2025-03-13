@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -10,40 +10,45 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('STUDENT');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState('STUDENT');
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get role from query params if available
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const roleParam = params.get('role');
+    if (roleParam) {
+      setRole(roleParam.toUpperCase());
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      toast.error("Passwords don't match!");
+    // Basic validation
+    if (!name || !email || !password) {
+      toast.error('All fields are required');
       return;
     }
     
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    // Faculty validation (for demo purposes)
+    if (role === 'FACULTY' && !email.includes('.com')) {
+      toast.error('Faculty email must contain .com domain');
       return;
     }
     
     setIsLoading(true);
     
     try {
-      // Validate faculty email (must include .com domain)
-      if (role === 'FACULTY' && !email.includes('.com')) {
-        toast.error('Faculty email must include .com domain');
-        setIsLoading(false);
-        return;
-      }
-      
       await register(name, email, password, role);
       toast.success('Registration successful!');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
+      // Toast is shown in the useAuth hook
     } finally {
       setIsLoading(false);
     }
@@ -61,12 +66,11 @@ const Register = () => {
             </div>
             <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
             <CardDescription>
-              Join CampusHub to access academic resources
+              Join CampusHub as a {role.toLowerCase()}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Name field */}
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium">
                   Full Name
@@ -82,12 +86,11 @@ const Register = () => {
                     onChange={(e) => setName(e.target.value)}
                     required
                     className="w-full pl-10 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="John Doe"
+                    placeholder="Enter your full name"
                   />
                 </div>
               </div>
               
-              {/* Email field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
                   Email
@@ -103,7 +106,7 @@ const Register = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full pl-10 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder={role === 'STUDENT' ? "student@example.com" : "faculty@university.com"}
+                    placeholder="your.email@example.com"
                   />
                 </div>
                 {role === 'FACULTY' && (
@@ -113,36 +116,6 @@ const Register = () => {
                 )}
               </div>
               
-              {/* Role selection */}
-              <div className="space-y-2">
-                <label htmlFor="role" className="text-sm font-medium">
-                  I am a:
-                </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      value="STUDENT"
-                      checked={role === 'STUDENT'}
-                      onChange={() => setRole('STUDENT')}
-                      className="h-4 w-4 text-primary focus:ring-primary"
-                    />
-                    <span>Student</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      value="FACULTY"
-                      checked={role === 'FACULTY'}
-                      onChange={() => setRole('FACULTY')}
-                      className="h-4 w-4 text-primary focus:ring-primary"
-                    />
-                    <span>Faculty</span>
-                  </label>
-                </div>
-              </div>
-              
-              {/* Password field */}
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">
                   Password
@@ -153,35 +126,40 @@ const Register = () => {
                   </span>
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full pl-10 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="••••••••"
-                    minLength={6}
+                    className="w-full pl-10 pr-10 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Create a secure password"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </button>
                 </div>
               </div>
               
-              {/* Confirm Password field */}
               <div className="space-y-2">
-                <label htmlFor="confirmPassword" className="text-sm font-medium">
-                  Confirm Password
+                <label htmlFor="role" className="text-sm font-medium">
+                  Register as
                 </label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
                   className="w-full py-2 px-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="••••••••"
-                  minLength={6}
-                />
+                >
+                  <option value="STUDENT">Student</option>
+                  <option value="FACULTY">Faculty</option>
+                  <option value="ADMIN">Administrator</option>
+                </select>
               </div>
               
-              {/* Submit button */}
               <button
                 type="submit"
                 className={`w-full py-2 rounded-md bg-primary text-white font-medium transition-colors ${
@@ -189,13 +167,12 @@ const Register = () => {
                 }`}
                 disabled={isLoading}
               >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
+                {isLoading ? 'Creating account...' : 'Create Account'}
               </button>
               
-              {/* Login link */}
               <div className="text-center text-sm">
                 <span className="text-muted-foreground">Already have an account? </span>
-                <Link to={role === 'STUDENT' ? '/auth/student-login' : '/auth/faculty-login'} className="text-primary hover:underline">
+                <Link to="/auth/student-login" className="text-primary hover:underline">
                   Sign in
                 </Link>
               </div>
