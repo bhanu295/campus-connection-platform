@@ -2,7 +2,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from './prisma';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 
 // JWT Secret key - in production this should be stored in environment variables
 const JWT_SECRET = 'your-secret-key-change-in-production';

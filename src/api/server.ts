@@ -4,10 +4,6 @@ import cors from 'cors';
 import { prisma } from '../lib/prisma';
 import { hashPassword, verifyPassword, generateToken, getUserFromToken } from '../lib/auth';
 
-// Add necessary dependencies
-// npm install express cors
-// npm install @types/express @types/cors --save-dev
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
