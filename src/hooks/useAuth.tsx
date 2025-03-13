@@ -3,6 +3,9 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+// Set baseURL for all axios requests
+axios.defaults.baseURL = 'http://localhost:5000';
+
 interface User {
   id: string;
   name: string;
@@ -29,13 +32,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Check if user is already logged in
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const token = localStorage.getItem('token');
+    
+    if (storedUser && token) {
       try {
         const userData = JSON.parse(storedUser);
         setUser(userData);
+        
+        // Set authorization header for all future requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (error) {
         console.error("Failed to parse user data from localStorage:", error);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
     setIsLoading(false);
@@ -50,6 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(user);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
+      
+      // Set authorization header for all future requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       
       // Redirect based on user role
       if (user.role === 'ADMIN') {
@@ -77,6 +89,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       
+      // Set authorization header for all future requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       // Redirect based on user role
       if (user.role === 'ADMIN') {
         navigate('/dashboard/admin');
@@ -97,6 +112,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    // Clear authorization header
+    delete axios.defaults.headers.common['Authorization'];
     navigate('/auth/student-login');
   };
 

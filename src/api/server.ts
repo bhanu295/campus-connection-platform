@@ -15,10 +15,16 @@ app.use(express.json());
 const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ message: 'Authentication required' });
+    if (!token) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
+    }
 
     const user = await getUserFromToken(token);
-    if (!user) return res.status(401).json({ message: 'Invalid or expired token' });
+    if (!user) {
+      res.status(401).json({ message: 'Invalid or expired token' });
+      return;
+    }
 
     (req as any).user = user;
     next();
@@ -31,10 +37,14 @@ const authenticate = async (req: Request, res: Response, next: NextFunction) => 
 const authorize = (roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = (req as any).user;
-    if (!user) return res.status(401).json({ message: 'Authentication required' });
+    if (!user) {
+      res.status(401).json({ message: 'Authentication required' });
+      return;
+    }
 
     if (!roles.includes(user.role)) {
-      return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+      res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+      return;
     }
 
     next();
