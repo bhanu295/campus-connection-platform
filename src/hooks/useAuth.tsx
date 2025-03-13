@@ -2,9 +2,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'sonner';
 
-// Set baseURL for all axios requests
-axios.defaults.baseURL = 'http://localhost:5000';
+// Configure axios
+axios.defaults.baseURL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000' 
+  : '';
 
 interface User {
   id: string;
@@ -71,8 +74,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         navigate('/dashboard/student');
       }
-    } catch (error) {
+      
+      toast.success(`Welcome back, ${user.name}!`);
+    } catch (error: any) {
       console.error("Login error:", error);
+      toast.error(error.response?.data?.message || "Login failed. Please check your credentials.");
       throw error;
     } finally {
       setIsLoading(false);
@@ -100,8 +106,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         navigate('/dashboard/student');
       }
-    } catch (error) {
+      
+      toast.success(`Welcome to CampusHub, ${user.name}!`);
+    } catch (error: any) {
       console.error("Registration error:", error);
+      toast.error(error.response?.data?.message || "Registration failed. Please try again.");
       throw error;
     } finally {
       setIsLoading(false);
@@ -115,6 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Clear authorization header
     delete axios.defaults.headers.common['Authorization'];
     navigate('/auth/student-login');
+    toast.info("You have been logged out");
   };
 
   return (

@@ -1,4 +1,3 @@
-
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { prisma } from '../lib/prisma';
@@ -59,8 +58,7 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      res.status(400).json({ message: 'User with this email already exists' });
-      return;
+      return res.status(400).json({ message: 'User with this email already exists' });
     }
 
     // Hash the password
@@ -85,10 +83,10 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     // Generate JWT token
     const token = generateToken(user);
 
-    res.status(201).json({ user, token });
+    return res.status(201).json({ user, token });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -99,21 +97,18 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     // Find the user
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      res.status(400).json({ message: 'Invalid credentials' });
-      return;
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Check if the role matches
     if (role.toUpperCase() !== user.role) {
-      res.status(400).json({ message: 'Invalid role for this user' });
-      return;
+      return res.status(400).json({ message: 'Invalid role for this user' });
     }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password);
     if (!isPasswordValid) {
-      res.status(400).json({ message: 'Invalid credentials' });
-      return;
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT token
@@ -123,7 +118,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
       role: user.role,
     });
 
-    res.json({
+    return res.json({
       user: {
         id: user.id,
         name: user.name,
@@ -134,7 +129,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -151,10 +146,10 @@ app.get('/api/materials', async (req: Request, res: Response) => {
         },
       },
     });
-    res.json(materials);
+    return res.json(materials);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -178,10 +173,10 @@ app.post('/api/materials', authenticate, async (req: Request, res: Response) => 
       },
     });
 
-    res.status(201).json(material);
+    return res.status(201).json(material);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -198,10 +193,10 @@ app.put('/api/materials/:id/download', async (req: Request, res: Response) => {
       },
     });
     
-    res.json(material);
+    return res.json(material);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 

@@ -24,6 +24,11 @@ const Register = () => {
       return;
     }
     
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -36,9 +41,9 @@ const Register = () => {
       
       await register(name, email, password, role);
       toast.success('Registration successful!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      toast.error(error.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +66,7 @@ const Register = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name field */}
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium">
                   Full Name
@@ -81,6 +87,7 @@ const Register = () => {
                 </div>
               </div>
               
+              {/* Email field */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
                   Email
@@ -106,6 +113,7 @@ const Register = () => {
                 )}
               </div>
               
+              {/* Role selection */}
               <div className="space-y-2">
                 <label htmlFor="role" className="text-sm font-medium">
                   I am a:
@@ -134,6 +142,7 @@ const Register = () => {
                 </div>
               </div>
               
+              {/* Password field */}
               <div className="space-y-2">
                 <label htmlFor="password" className="text-sm font-medium">
                   Password
@@ -150,11 +159,12 @@ const Register = () => {
                     required
                     className="w-full pl-10 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="••••••••"
-                    minLength={8}
+                    minLength={6}
                   />
                 </div>
               </div>
               
+              {/* Confirm Password field */}
               <div className="space-y-2">
                 <label htmlFor="confirmPassword" className="text-sm font-medium">
                   Confirm Password
@@ -167,10 +177,11 @@ const Register = () => {
                   required
                   className="w-full py-2 px-3 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="••••••••"
-                  minLength={8}
+                  minLength={6}
                 />
               </div>
               
+              {/* Submit button */}
               <button
                 type="submit"
                 className={`w-full py-2 rounded-md bg-primary text-white font-medium transition-colors ${
@@ -181,6 +192,7 @@ const Register = () => {
                 {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
               
+              {/* Login link */}
               <div className="text-center text-sm">
                 <span className="text-muted-foreground">Already have an account? </span>
                 <Link to={role === 'STUDENT' ? '/auth/student-login' : '/auth/faculty-login'} className="text-primary hover:underline">
