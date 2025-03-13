@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./hooks/useAuth";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Pages
 import Index from "./pages/Index";
@@ -52,49 +54,99 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Main Landing Page */}
-          <Route path="/" element={<Index />} />
-          
-          {/* Authentication Routes */}
-          <Route path="/auth/student-login" element={<StudentLogin />} />
-          <Route path="/auth/faculty-login" element={<FacultyLogin />} />
-          <Route path="/auth/admin-login" element={<AdminLogin />} />
-          <Route path="/auth/register" element={<Register />} />
-          
-          {/* Dashboard Routes */}
-          <Route path="/dashboard/student" element={<StudentDashboard />} />
-          <Route path="/dashboard/faculty" element={<FacultyDashboard />} />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
-          
-          {/* Study Materials Routes */}
-          <Route path="/materials/browse" element={<BrowseMaterials />} />
-          <Route path="/materials/upload" element={<UploadMaterial />} />
-          
-          {/* Events Routes */}
-          <Route path="/events" element={<EventsList />} />
-          <Route path="/events/create" element={<CreateEvent />} />
-          <Route path="/events/:id" element={<EventDetails />} />
-          
-          {/* Forum Routes */}
-          <Route path="/forum" element={<ForumDiscussion />} />
-          <Route path="/forum/post/:id" element={<ForumPost />} />
-          <Route path="/forum/create" element={<ForumPost />} />
-          
-          {/* Notice Board Routes */}
-          <Route path="/notices" element={<Notices />} />
-          <Route path="/notices/create" element={<CreateNotice />} />
-          
-          {/* Admin Management Routes */}
-          <Route path="/admin/users" element={<AdminManageUsers />} />
-          <Route path="/admin/materials" element={<AdminManageMaterials />} />
-          <Route path="/admin/events" element={<AdminManageEvents />} />
-          <Route path="/admin/forum" element={<AdminManageForum />} />
-          <Route path="/admin/notices" element={<AdminManageNotices />} />
-          
-          {/* Catch-all Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Main Landing Page */}
+            <Route path="/" element={<Index />} />
+            
+            {/* Authentication Routes */}
+            <Route path="/auth/student-login" element={<StudentLogin />} />
+            <Route path="/auth/faculty-login" element={<FacultyLogin />} />
+            <Route path="/auth/admin-login" element={<AdminLogin />} />
+            <Route path="/auth/register" element={<Register />} />
+            
+            {/* Dashboard Routes - Protected */}
+            <Route path="/dashboard/student" element={
+              <ProtectedRoute allowedRoles={['STUDENT']}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/faculty" element={
+              <ProtectedRoute allowedRoles={['FACULTY']}>
+                <FacultyDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/admin" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            
+            {/* Study Materials Routes */}
+            <Route path="/materials/browse" element={<BrowseMaterials />} />
+            <Route path="/materials/upload" element={
+              <ProtectedRoute allowedRoles={['FACULTY', 'ADMIN']}>
+                <UploadMaterial />
+              </ProtectedRoute>
+            } />
+            
+            {/* Events Routes */}
+            <Route path="/events" element={<EventsList />} />
+            <Route path="/events/create" element={
+              <ProtectedRoute allowedRoles={['FACULTY', 'ADMIN']}>
+                <CreateEvent />
+              </ProtectedRoute>
+            } />
+            <Route path="/events/:id" element={<EventDetails />} />
+            
+            {/* Forum Routes */}
+            <Route path="/forum" element={<ForumDiscussion />} />
+            <Route path="/forum/post/:id" element={<ForumPost />} />
+            <Route path="/forum/create" element={
+              <ProtectedRoute>
+                <ForumPost />
+              </ProtectedRoute>
+            } />
+            
+            {/* Notice Board Routes */}
+            <Route path="/notices" element={<Notices />} />
+            <Route path="/notices/create" element={
+              <ProtectedRoute allowedRoles={['FACULTY', 'ADMIN']}>
+                <CreateNotice />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin Management Routes - Protected */}
+            <Route path="/admin/users" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminManageUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/materials" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminManageMaterials />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/events" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminManageEvents />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/forum" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminManageForum />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/notices" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminManageNotices />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

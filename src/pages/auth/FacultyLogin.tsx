@@ -4,11 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BookOpen, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const FacultyLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,13 +25,10 @@ const FacultyLogin = () => {
         return;
       }
       
-      // Mock authentication - in a real app, this would call an API
-      setTimeout(() => {
-        toast.success('Login successful!');
-        localStorage.setItem('user', JSON.stringify({ role: 'faculty', email }));
-        navigate('/dashboard/faculty');
-      }, 1000);
+      await login(email, password, 'FACULTY');
+      toast.success('Login successful!');
     } catch (error) {
+      console.error('Login error:', error);
       toast.error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);

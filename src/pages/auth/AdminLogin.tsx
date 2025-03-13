@@ -4,11 +4,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,13 +18,10 @@ const AdminLogin = () => {
     setIsLoading(true);
     
     try {
-      // Mock authentication - in a real app, this would call an API
-      setTimeout(() => {
-        toast.success('Admin login successful!');
-        localStorage.setItem('user', JSON.stringify({ role: 'admin', email }));
-        navigate('/dashboard/admin');
-      }, 1000);
+      await login(email, password, 'ADMIN');
+      toast.success('Admin login successful!');
     } catch (error) {
+      console.error('Login error:', error);
       toast.error('Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);

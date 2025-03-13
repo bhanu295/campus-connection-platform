@@ -4,14 +4,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('student');
+  const [role, setRole] = useState('STUDENT');
   const [isLoading, setIsLoading] = useState(false);
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,19 +28,16 @@ const Register = () => {
     
     try {
       // Validate faculty email (must include .com domain)
-      if (role === 'faculty' && !email.includes('.com')) {
+      if (role === 'FACULTY' && !email.includes('.com')) {
         toast.error('Faculty email must include .com domain');
         setIsLoading(false);
         return;
       }
       
-      // Mock registration - in a real app, this would call an API
-      setTimeout(() => {
-        toast.success('Registration successful!');
-        localStorage.setItem('user', JSON.stringify({ role, email, name }));
-        navigate(role === 'student' ? '/dashboard/student' : '/dashboard/faculty');
-      }, 1000);
+      await register(name, email, password, role);
+      toast.success('Registration successful!');
     } catch (error) {
+      console.error('Registration error:', error);
       toast.error('Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -97,10 +96,10 @@ const Register = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full pl-10 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder={role === 'student' ? "student@example.com" : "faculty@university.com"}
+                    placeholder={role === 'STUDENT' ? "student@example.com" : "faculty@university.com"}
                   />
                 </div>
-                {role === 'faculty' && (
+                {role === 'FACULTY' && (
                   <p className="text-xs text-muted-foreground">
                     Faculty email must include .com domain
                   </p>
@@ -115,9 +114,9 @@ const Register = () => {
                   <label className="flex items-center space-x-2">
                     <input
                       type="radio"
-                      value="student"
-                      checked={role === 'student'}
-                      onChange={() => setRole('student')}
+                      value="STUDENT"
+                      checked={role === 'STUDENT'}
+                      onChange={() => setRole('STUDENT')}
                       className="h-4 w-4 text-primary focus:ring-primary"
                     />
                     <span>Student</span>
@@ -125,9 +124,9 @@ const Register = () => {
                   <label className="flex items-center space-x-2">
                     <input
                       type="radio"
-                      value="faculty"
-                      checked={role === 'faculty'}
-                      onChange={() => setRole('faculty')}
+                      value="FACULTY"
+                      checked={role === 'FACULTY'}
+                      onChange={() => setRole('FACULTY')}
                       className="h-4 w-4 text-primary focus:ring-primary"
                     />
                     <span>Faculty</span>
@@ -184,7 +183,7 @@ const Register = () => {
               
               <div className="text-center text-sm">
                 <span className="text-muted-foreground">Already have an account? </span>
-                <Link to={role === 'student' ? '/auth/student-login' : '/auth/faculty-login'} className="text-primary hover:underline">
+                <Link to={role === 'STUDENT' ? '/auth/student-login' : '/auth/faculty-login'} className="text-primary hover:underline">
                   Sign in
                 </Link>
               </div>

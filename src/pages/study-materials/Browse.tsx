@@ -1,22 +1,28 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, Book, FileText, FileArchive, FilePlus2 } from 'lucide-react';
+import { Search, Filter, Book, FileText, FileArchive, FilePlus2, Download } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 type Material = {
   id: string;
   title: string;
   subject: string;
   department: string;
-  type: 'PDF' | 'PPT' | 'DOC' | 'Question Paper';
-  uploadedBy: string;
-  uploadDate: string;
-  downloads: number;
-  year: string;
+  type: string;
+  fileUrl: string;
   fileSize: string;
+  year: string;
+  downloads: number;
+  uploader: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
 };
 
 const BrowseMaterials = () => {
@@ -27,90 +33,49 @@ const BrowseMaterials = () => {
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
   
-  // Mock data
   useEffect(() => {
-    // This would be an API call in a real application
-    const mockMaterials: Material[] = [
-      {
-        id: '1',
-        title: 'Introduction to Computer Science',
-        subject: 'CS101',
-        department: 'Computer Science',
-        type: 'PDF',
-        uploadedBy: 'Prof. Smith',
-        uploadDate: '2023-05-15',
-        downloads: 156,
-        year: '1st Year',
-        fileSize: '2.4 MB',
-      },
-      {
-        id: '2',
-        title: 'Advanced Mathematics for Engineers',
-        subject: 'MATH202',
-        department: 'Mathematics',
-        type: 'PDF',
-        uploadedBy: 'Prof. Johnson',
-        uploadDate: '2023-06-20',
-        downloads: 98,
-        year: '2nd Year',
-        fileSize: '3.7 MB',
-      },
-      {
-        id: '3',
-        title: 'Object-Oriented Programming Concepts',
-        subject: 'CS201',
-        department: 'Computer Science',
-        type: 'PPT',
-        uploadedBy: 'Prof. Williams',
-        uploadDate: '2023-07-05',
-        downloads: 210,
-        year: '2nd Year',
-        fileSize: '5.2 MB',
-      },
-      {
-        id: '4',
-        title: 'Principles of Economics',
-        subject: 'ECON101',
-        department: 'Economics',
-        type: 'DOC',
-        uploadedBy: 'Prof. Brown',
-        uploadDate: '2023-08-10',
-        downloads: 75,
-        year: '1st Year',
-        fileSize: '1.8 MB',
-      },
-      {
-        id: '5',
-        title: 'Database Management Systems',
-        subject: 'CS301',
-        department: 'Computer Science',
-        type: 'PDF',
-        uploadedBy: 'Prof. Davis',
-        uploadDate: '2023-09-15',
-        downloads: 183,
-        year: '3rd Year',
-        fileSize: '4.6 MB',
-      },
-      {
-        id: '6',
-        title: 'End Semester Question Paper - CS101',
-        subject: 'CS101',
-        department: 'Computer Science',
-        type: 'Question Paper',
-        uploadedBy: 'Admin',
-        uploadDate: '2023-12-10',
-        downloads: 320,
-        year: '1st Year',
-        fileSize: '0.9 MB',
-      },
-    ];
+    const fetchMaterials = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('/api/materials');
+        setMaterials(response.data);
+        setFilteredMaterials(response.data);
+      } catch (error) {
+        console.error('Error fetching materials:', error);
+        toast.error('Failed to load study materials');
+        
+        const mockMaterials = [
+          {
+            id: '1',
+            title: 'Introduction to Computer Science',
+            subject: 'CS101',
+            department: 'Computer Science',
+            type: 'PDF',
+            fileUrl: '/files/intro-cs.pdf',
+            fileSize: '2.4 MB',
+            year: '1st Year',
+            downloads: 156,
+            uploader: {
+              id: '1',
+              name: 'Prof. Smith',
+            },
+            createdAt: '2023-05-15',
+          },
+          // ... other mock materials
+        ];
+        setMaterials(mockMaterials);
+        setFilteredMaterials(mockMaterials);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     
-    setMaterials(mockMaterials);
-    setFilteredMaterials(mockMaterials);
+    fetchMaterials();
   }, []);
   
-  // Filter materials based on search and filters
   useEffect(() => {
     let result = [...materials];
     
@@ -140,7 +105,24 @@ const BrowseMaterials = () => {
     setFilteredMaterials(result);
   }, [searchTerm, selectedDepartment, selectedSubject, selectedType, selectedYear, materials]);
   
-  // Extract unique values for filters
+  const handleDownload = async (materialId: string, fileUrl: string) => {
+    try {
+      await axios.put(`/api/materials/${materialId}/download`);
+      window.open(fileUrl, '_blank');
+      setMaterials(prev => 
+        prev.map(material => 
+          material.id === materialId 
+            ? { ...material, downloads: material.downloads + 1 } 
+            : material
+        )
+      );
+      toast.success('Download started');
+    } catch (error) {
+      console.error('Error downloading material:', error);
+      toast.error('Download failed');
+    }
+  };
+  
   const departments = [...new Set(materials.map(material => material.department))];
   const subjects = [...new Set(materials.map(material => material.subject))];
   const types = [...new Set(materials.map(material => material.type))];
@@ -174,13 +156,14 @@ const BrowseMaterials = () => {
             </p>
           </div>
           
-          <Link to="/materials/upload" className="btn-primary mt-4 md:mt-0 flex items-center">
-            <FilePlus2 className="h-4 w-4 mr-2" />
-            Upload Material
-          </Link>
+          {isAuthenticated && (
+            <Link to="/materials/upload" className="btn-primary mt-4 md:mt-0 flex items-center">
+              <FilePlus2 className="h-4 w-4 mr-2" />
+              Upload Material
+            </Link>
+          )}
         </div>
         
-        {/* Search and Filters */}
         <div className="bg-card rounded-lg p-4 mb-8 shadow-sm">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
@@ -250,64 +233,73 @@ const BrowseMaterials = () => {
           </div>
         </div>
         
-        {/* Materials List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMaterials.length > 0 ? (
-            filteredMaterials.map((material) => (
-              <Card key={material.id} className="hover:shadow-md transition-shadow duration-300">
-                <CardContent className="p-0">
-                  <div className="p-4 border-b border-border">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
-                          {getFileIcon(material.type)}
+        {isLoading ? (
+          <div className="text-center py-10">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p>Loading study materials...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMaterials.length > 0 ? (
+              filteredMaterials.map((material) => (
+                <Card key={material.id} className="hover:shadow-md transition-shadow duration-300">
+                  <CardContent className="p-0">
+                    <div className="p-4 border-b border-border">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mr-3">
+                            {getFileIcon(material.type)}
+                          </div>
+                          <div>
+                            <h3 className="font-medium line-clamp-1 text-lg">{material.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {material.subject} | {material.department}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-medium line-clamp-1 text-lg">{material.title}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {material.subject} | {material.department}
-                          </p>
-                        </div>
+                        <span className="text-xs font-medium bg-secondary px-2 py-1 rounded-full">
+                          {material.type}
+                        </span>
                       </div>
-                      <span className="text-xs font-medium bg-secondary px-2 py-1 rounded-full">
-                        {material.type}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4">
-                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-                      <span>Uploaded by: {material.uploadedBy}</span>
-                      <span>{material.year}</span>
                     </div>
                     
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {new Date(material.uploadDate).toLocaleDateString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {material.downloads} downloads | {material.fileSize}
-                      </span>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+                        <span>Uploaded by: {material.uploader.name}</span>
+                        <span>{material.year}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {new Date(material.createdAt).toLocaleDateString()}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {material.downloads} downloads | {material.fileSize}
+                        </span>
+                      </div>
+                      
+                      <button 
+                        className="w-full mt-4 bg-primary/10 text-primary font-medium py-2 rounded hover:bg-primary/20 transition-colors flex items-center justify-center"
+                        onClick={() => handleDownload(material.id, material.fileUrl)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </button>
                     </div>
-                    
-                    <button className="w-full mt-4 bg-primary/10 text-primary font-medium py-2 rounded hover:bg-primary/20 transition-colors flex items-center justify-center">
-                      <Book className="h-4 w-4 mr-2" />
-                      Download
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <div className="col-span-3 text-center py-10">
-              <Book className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No materials found</h3>
-              <p className="text-muted-foreground">
-                Try adjusting your search or filters, or upload a new material.
-              </p>
-            </div>
-          )}
-        </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-10">
+                <Book className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No materials found</h3>
+                <p className="text-muted-foreground">
+                  Try adjusting your search or filters, or upload a new material.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       <Footer />
